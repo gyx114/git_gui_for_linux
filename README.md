@@ -6,7 +6,9 @@
 
 - ✅ 查看 Git 仓库状态（未暂存/已暂存文件）
 - ✅ 查看文件差异（Diff）
+- ✅ 一键暂存全部（git add .）
 - ✅ 提交更改
+- ✅ 推送到远端（git push）
 - ✅ 实时刷新状态
 - ✅ 手动选择 Git 仓库路径（可在非 Git 目录启动）
 - 🚧 暂存/取消暂存文件
@@ -53,14 +55,51 @@ make
 ./gitgui
 ```
 
+## 安装到全局路径（推荐）
+
+安装后可以在任意目录直接执行 `gitgui`。
+
+### 用户级安装（无需 sudo）
+
+```bash
+cd ~/my_git_gui/build
+cmake ..
+make -j2
+cmake --install . --prefix "$HOME/.local"
+```
+
+如果提示找不到命令，加入 PATH：
+
+```bash
+echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### 系统级安装（需要 sudo）
+
+```bash
+cd ~/my_git_gui/build
+cmake ..
+make -j2
+sudo cmake --install .
+```
+
+安装后在任意目录运行：
+
+```bash
+gitgui
+```
+
 ## 使用说明
 
 ### 基本操作
 
 1. 刷新：点击“刷新”按钮
 2. 查看 Diff：点击左侧文件列表中的文件
-3. 提交：在输入框中填写提交消息，点击“提交”
-4. 选择仓库：点击“选择仓库”按钮，选择 Git 仓库目录
+3. 一键暂存全部：点击“Add All”按钮（执行 `git add .`）
+4. 提交：在输入框中填写提交消息，点击“提交”
+5. 推送：点击“Push”按钮（执行 `git push`）
+6. 选择仓库：点击“选择仓库”按钮，选择 Git 仓库目录
 
 ### 文件状态标识
 
@@ -91,12 +130,12 @@ my_git_gui/
 
 ## 待实现功能
 
-- 暂存文件（git add）
+- 按文件暂存（当前仅支持 Add All）
 - 取消暂存（git reset HEAD）
 - 丢弃更改（git checkout --）
 - 显示当前分支
 - 分支切换
-- 推送/拉取
+- 拉取（git pull）
 
 ## 常见问题
 
