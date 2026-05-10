@@ -67,6 +67,11 @@ public:
         return exec("git -C " + shell_quote(repo_path) + " status --porcelain");
     }
 
+    static void add_all(const std::string &repo_path)
+    {
+        exec("git -C " + shell_quote(repo_path) + " add .");
+    }
+
     static void stage(const std::string &repo_path, const std::string &file)
     {
         exec("git -C " + shell_quote(repo_path) + " add " + shell_quote(file));
@@ -91,6 +96,11 @@ public:
     {
         return exec("git -C " + shell_quote(repo_path) + " log --oneline -" + std::to_string(count));
     }
+
+    static std::string push(const std::string &repo_path)
+    {
+        return exec("git -C " + shell_quote(repo_path) + " push 2>&1");
+    }
 };
 
 // 主窗口类
@@ -113,17 +123,23 @@ public:
         auto toolbar = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 5);
 
         m_select_repo_btn = Gtk::make_managed<Gtk::Button>("选择仓库");
+        m_add_all_btn = Gtk::make_managed<Gtk::Button>("Add All");
         m_refresh_btn = Gtk::make_managed<Gtk::Button>("刷新");
         m_commit_btn = Gtk::make_managed<Gtk::Button>("提交");
+        m_push_btn = Gtk::make_managed<Gtk::Button>("Push");
         m_commit_btn->set_sensitive(false);
 
         m_select_repo_btn->signal_clicked().connect(sigc::mem_fun(*this, &GitGUI::on_select_repo));
+        m_add_all_btn->signal_clicked().connect(sigc::mem_fun(*this, &GitGUI::on_add_all));
         m_refresh_btn->signal_clicked().connect(sigc::mem_fun(*this, &GitGUI::on_refresh));
         m_commit_btn->signal_clicked().connect(sigc::mem_fun(*this, &GitGUI::on_commit));
+        m_push_btn->signal_clicked().connect(sigc::mem_fun(*this, &GitGUI::on_push));
 
         toolbar->pack_start(*m_select_repo_btn, Gtk::PACK_SHRINK);
+        toolbar->pack_start(*m_add_all_btn, Gtk::PACK_SHRINK);
         toolbar->pack_start(*m_refresh_btn, Gtk::PACK_SHRINK);
         toolbar->pack_start(*m_commit_btn, Gtk::PACK_SHRINK);
+        toolbar->pack_start(*m_push_btn, Gtk::PACK_SHRINK);
 
         // 提交消息输入框
         m_commit_entry = Gtk::make_managed<Gtk::Entry>();
@@ -308,6 +324,47 @@ private:
         m_status_bar->set_text("提交成功！");
     }
 
+    void on_add_all()
+    {
+        if (m_repo_path.empty())
+        {
+            m_status_bar->set_text("请先选择 Git 仓库");
+            return;
+        }
+
+        GitExecutor::add_all(m_repo_path);
+        on_refresh();
+        m_status_bar->set_text("已执行 git add .");
+    }
+
+    void on_push()
+    {
+        if (m_repo_path.empty())
+        {
+            m_status_bar->set_text("请先选择 Git 仓库");
+            return;
+        }
+
+        std::string output = GitExecutor::push(m_repo_path);
+        std::string result = GitExecutor::trim_trailing_newlines(output);
+        if (result.empty())
+        {
+            result = "Push 已执行，未返回输出。";
+        }
+
+        Gtk::MessageDialog dialog(
+            *this,
+            "Push 结果",
+            false,
+            Gtk::MESSAGE_INFO,
+            Gtk::BUTTONS_OK,
+            true);
+        dialog.set_secondary_text(result);
+        dialog.run();
+
+        on_refresh();
+    }
+
     // TreeView 列结构
     class ModelColumns : public Gtk::TreeModel::ColumnRecord
     {
@@ -328,8 +385,10 @@ private:
     Gtk::TextView *m_diff_view = nullptr;
     Gtk::Entry *m_commit_entry = nullptr;
     Gtk::Button *m_select_repo_btn = nullptr;
+    Gtk::Button *m_add_all_btn = nullptr;
     Gtk::Button *m_refresh_btn = nullptr;
     Gtk::Button *m_commit_btn = nullptr;
+    Gtk::Button *m_push_btn = nullptr;
     Gtk::Label *m_status_bar = nullptr;
     std::string m_repo_path;
 };
